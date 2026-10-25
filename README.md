@@ -1,4 +1,4 @@
-# Wallpaper GIF Converter v1.4
+# Wallpaper GIF Converter 
 # Made by Snuver
 ============================
 
