@@ -342,7 +342,7 @@ def default_output_folder():
 def recommended_settings(detected_size):
     # these looked decent without making ridiculously huge gifs
     duration = 10
-    fps = 30
+    fps = 12
     if detected_size:
         dw, dh = detected_size
         width = min(dw, 1280)
@@ -356,7 +356,75 @@ def recommended_settings(detected_size):
     return duration, fps, width, height
 
 
-def record_scene(ffmpeg, duration, fps, temp_video):
+def get_screen_size():
+    if os.name != "nt":
+        return None
+    try:
+        user32 = ctypes.windll.user32
+        return int(user32.GetSystemMetrics(0)), int(user32.GetSystemMetrics(1))
+    except Exception:
+        return None
+
+
+def fit_render_to_screen(width, height):
+    screen = get_screen_size()
+    if not screen:
+        return width, height
+    screen_w, screen_h = screen
+    scale = min(1.0, screen_w / width, screen_h / height)
+    if scale >= 1.0:
+        return width, height
+    width = max(2, int(width * scale))
+    height = max(2, int(height * scale))
+    width -= width % 2
+    height -= height % 2
+    return width, height
+
+
+def find_render_area(metrics, wanted_w, wanted_h):
+    left = metrics["client_left"]
+    top = metrics["client_top"]
+
+    if os.name == "nt":
+        try:
+            user32 = ctypes.windll.user32
+
+            class RECT(ctypes.Structure):
+                _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long),
+                            ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
+
+            candidates = []
+            CALLBACK = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+
+            def check_child(hwnd, _):
+                rect = RECT()
+                if user32.IsWindowVisible(hwnd) and user32.GetWindowRect(hwnd, ctypes.byref(rect)):
+                    w = int(rect.right - rect.left)
+                    h = int(rect.bottom - rect.top)
+                    if w > 100 and h > 100:
+                        score = abs(w - wanted_w) + abs(h - wanted_h)
+                        candidates.append((score, int(rect.left), int(rect.top), w, h))
+                return True
+
+            callback = CALLBACK(check_child)
+            user32.EnumChildWindows(ctypes.c_void_p(metrics["hwnd"]), callback, 0)
+            if candidates:
+                best = min(candidates, key=lambda x: x[0])
+                if best[0] <= 16:
+                    _, left, top, _, _ = best
+        except Exception:
+            pass
+
+    screen = get_screen_size()
+    if screen:
+        screen_w, screen_h = screen
+        left = max(0, min(left, max(0, screen_w - wanted_w)))
+        top = max(0, min(top, max(0, screen_h - wanted_h)))
+
+    return left, top, wanted_w, wanted_h
+
+
+def record_scene(ffmpeg, duration, fps, temp_video, render_w, render_h):
     metrics = get_window_info()
     if not metrics:
         die("I opened the wallpaper but could not find its capture window on screen.")
@@ -364,23 +432,19 @@ def record_scene(ffmpeg, duration, fps, temp_video):
     keep_window_on_top(metrics)
     metrics = get_window_info(timeout=2.0) or metrics
 
-    left = metrics["client_left"]
-    top = metrics["client_top"]
-    width = metrics["client_width"]
-    height = metrics["client_height"]
     outer_w = metrics["outer_width"]
     outer_h = metrics["outer_height"]
+    left, top, width, height = find_render_area(metrics, render_w, render_h)
 
     log(f"Window size: {outer_w}x{outer_h}")
+    if outer_w != render_w or outer_h != render_h:
+        log(f"Windows wrapper is bigger than the wallpaper. Ignoring it and grabbing {render_w}x{render_h} instead.")
     log(f"Actual wallpaper area: {width}x{height} at ({left},{top})")
     log("Capture mode: DESKTOP REGION")
-    log("Recording the visible window because direct capture kept giving me black video.")
+    log("Recording the visible wallpaper because direct capture kept giving me black video.")
 
-    # h264 does not like odd sizes
     safe_w = width - (width % 2)
     safe_h = height - (height % 2)
-    if safe_w != width or safe_h != height:
-        log(f"Tiny safety crop: {width}x{height} -> {safe_w}x{safe_h}")
 
     cmd = [
         str(ffmpeg), "-hide_banner", "-loglevel", "warning", "-y",
@@ -509,6 +573,7 @@ def make_gif(ffmpeg, source_video, output, fps, gif_width, loop, target_mb=5.0):
         else:
             log(f"Final GIF: {final_mb:.2f} MB")
 
+
 def video_to_gif(ffmpeg, video, output, duration, fps, gif_width, loop, target_mb):
     with tempfile.TemporaryDirectory(prefix="we2gif_video_") as td:
         clipped = Path(td) / "clip.mp4"
@@ -528,7 +593,7 @@ def main():
     ap.add_argument("input", help="Wallpaper Engine .zip/folder/project.json, or video file")
     ap.add_argument("-o", "--output", help="Output GIF path")
     ap.add_argument("-d", "--duration", type=float, default=10.0, help="Capture/trim length in seconds (default: 10)")
-    ap.add_argument("--fps", type=int, default=30, help="GIF/capture FPS (default/recommended: 30)")
+    ap.add_argument("--fps", type=int, default=12, help="GIF/capture FPS (default/recommended: 12)")
     ap.add_argument("--render-width", type=int, default=0, help="Scene render width (0 = auto)")
     ap.add_argument("--render-height", type=int, default=0, help="Scene render height (0 = auto)")
     ap.add_argument("--gif-width", type=int, default=1280, help="GIF width, 0 = full render width (default: 1280)")
@@ -634,13 +699,17 @@ def main():
                 rw -= 1
             if rh % 2:
                 rh += 1
+            fitted_rw, fitted_rh = fit_render_to_screen(rw, rh)
+            if (fitted_rw, fitted_rh) != (rw, rh):
+                log(f"{rw}x{rh} is bigger than the screen, so I'm rendering at {fitted_rw}x{fitted_rh} instead.")
+                rw, rh = fitted_rw, fitted_rh
             log(f"Rendering at: {rw}x{rh}")
             temp_video = temp_root / "scene_capture.mp4"
             try:
                 close_wallpaper_window(we_exe)
                 time.sleep(0.3)
                 open_wallpaper_window(we_exe, project_root / "project.json", rw, rh)
-                record_scene(ffmpeg, args.duration, args.fps, temp_video)
+                record_scene(ffmpeg, args.duration, args.fps, temp_video, rw, rh)
             finally:
                 close_wallpaper_window(we_exe)
             make_gif(ffmpeg, temp_video, out, args.fps, args.gif_width, args.loop, args.target_mb)
