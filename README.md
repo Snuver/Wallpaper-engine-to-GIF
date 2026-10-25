@@ -2,8 +2,7 @@
 # Made by Snuver
 
 
-### I made this because somehow converting wallpaper engine clips into a normal GIF
-### is way more annoying than it should be lol
+### I made this because somehow converting wallpaper engine clips into a normal GIF is way more annoying than it should be lol
 
 # What it does
 Throw a wallpaper engine ZIP/folder/project.json at it and it will try to turn
