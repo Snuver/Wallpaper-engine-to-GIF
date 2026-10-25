@@ -9,6 +9,7 @@ What it does
 ------------
 Throw a wallpaper engine ZIP/folder/project.json at it and it will try to turn
 that wallpaper into a GIF!!!!!
+<img width="2536" height="1494" alt="image (2)" src="https://github.com/user-attachments/assets/ac1413e1-dc73-449f-8172-c9be44048498" />
 
 
 Video wallpaper?
