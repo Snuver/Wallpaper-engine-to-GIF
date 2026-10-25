@@ -1,5 +1,5 @@
-Wallpaper GIF Converter v1.4
-Made by Snuver
+# Wallpaper GIF Converter v1.4
+# Made by Snuver
 ============================
 
 I made this because somehow converting wallpaper engine clips into a normal GIF
@@ -9,6 +9,7 @@ What it does
 ------------
 Throw a wallpaper engine ZIP/folder/project.json at it and it will try to turn
 that wallpaper into a GIF!!!!!
+
 
 Video wallpaper?
 Easy. It converts the video.
