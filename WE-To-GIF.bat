@@ -36,7 +36,7 @@ if "%~1"=="" (
 echo.
 echo ================= WHAT I RECOMMEND =================
 echo Length:      10 seconds
-echo FPS:         30 FPS
+echo FPS:         12 FPS
 echo Size:        1280 px wide
 echo Target size: 5 MB
 echo.
@@ -50,8 +50,8 @@ echo.
 
 set /p "DUR=GIF length in seconds [Recommended: 10]: "
 if "%DUR%"=="" set "DUR=10"
-set /p "FPS=FPS [Recommended: 30]: "
-if "%FPS%"=="" set "FPS=30"
+set /p "FPS=FPS [Recommended: 12]: "
+if "%FPS%"=="" set "FPS=12"
 set /p "WIDTH=GIF width in pixels [Recommended: 1280, 0 = full size]: "
 if "%WIDTH%"=="" set "WIDTH=1280"
 set /p "TARGET=Target max GIF size in MB [Recommended: 5, 0 = no limit]: "
