@@ -28,7 +28,7 @@ So yeah. Desktop region capture it is.
 How to use it?
 -------------
 1. Extract this folder.
-2. Drag your Wallpaper Engine ZIP onto WE-To-GIF-v1.4.bat.
+2. Drag your Wallpaper Engine ZIP onto WE-To-GIF.bat.
 3. Press ENTER on the settings if you do not care and want my recommended ones. (Not accurate, its better if you do it your own)
 4. Do NOT cover or minimize the Wallpaper Engine pop-out while it records.
 5. Done.
