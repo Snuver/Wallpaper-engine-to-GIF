@@ -68,7 +68,7 @@ Desktop region capture it is 😭
 1. Extract the converter folder.
 2. Get the Wallpaper Engine wallpaper you want.
 3. Compress the wallpaper folder into a ZIP.
-4. Drag the ZIP onto `WE-To-GIF-v1.5.bat`.
+4. Drag the ZIP onto `WE-To-GIF.bat`.
 5. Choose your GIF length, FPS, width, and target file size.
 6. If you do not care, just press ENTER and use the recommended settings.
 7. Do **NOT** cover or minimize the Wallpaper Engine pop-out while it records.
