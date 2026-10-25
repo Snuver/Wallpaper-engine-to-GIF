@@ -177,6 +177,21 @@ aka **Snuver**
 
 If you share it, modify it, or make something based on it, keeping the credit wooould be nicee 👀
 
+<h2 align="center">Support my work ♡</h2>
+
+<p align="center">
+  If you really like my stuff!!! you can always support me a little ❤️
+</p>
+
+<p align="center">
+  <a href="https://buymeacoffee.com/snuver">
+    <img
+      src="https://cdn.buymeacoffee.com/buttons/default-orange.png"
+      alt="Buy Me a Coffee"
+      width="280"
+    >
+  </a>
+</p>
 ---
 
 ### Made by Snuver
