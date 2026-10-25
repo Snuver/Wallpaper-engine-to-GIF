@@ -177,7 +177,7 @@ aka **Snuver**
 
 If you share it, modify it, or make something based on it, keeping the credit wooould be nicee 👀
 
-<h2 align="center">Support my work ♡</h2>
+<h2 align="center">Support my work ❤️‍🔥</h2>
 
 <p align="center">
   If you really like my stuff!!! you can always support me a little ❤️
