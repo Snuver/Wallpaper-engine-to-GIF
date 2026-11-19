@@ -94,5 +94,4 @@ if errorlevel 1 (
 )
 
 echo.
-echo That's it. Made by snuver.
 pause

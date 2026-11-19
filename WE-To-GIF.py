@@ -121,7 +121,43 @@ def get_ffmpeg(app_dir, auto_download=True):
     tools.mkdir(parents=True, exist_ok=True)
     archive = tools / "ffmpeg.zip"
     log("No ffmpeg found, downloading it...")
-    urllib.request.urlretrieve(FFMPEG_URL, archive)
+    try:
+        urllib.request.urlretrieve(FFMPEG_URL, archive)
+    except OSError as python_error:
+        archive.unlink(missing_ok=True)
+
+        curl = shutil.which("curl.exe")
+        if not curl:
+            die(f"FFmpeg download failed: {python_error}")
+
+        log("Python HTTPS failed. Retrying with Windows curl...")
+
+        try:
+            subprocess.run(
+                [
+                    curl,
+                    "--fail",
+                    "--location",
+                    "--show-error",
+                    "--silent",
+                    "--retry", "2",
+                    "--connect-timeout", "20",
+                    "--max-time", "900",
+                    "--output", str(archive),
+                    FFMPEG_URL
+                ],
+                check=True
+            )
+        except (OSError, subprocess.CalledProcessError) as curl_error:
+            archive.unlink(missing_ok=True)
+            die(
+                f"FFmpeg download failed. "
+                f"Python: {python_error}; curl: {curl_error}"
+            )
+
+    if not zipfile.is_zipfile(archive):
+        archive.unlink(missing_ok=True)
+        die("FFmpeg download is not a valid ZIP file.")
     log("ffmpeg downloaded, unzipping...")
     with zipfile.ZipFile(archive, "r") as zf:
         ffmpeg_member = next((n for n in zf.namelist() if n.lower().endswith("/bin/ffmpeg.exe")), None)
@@ -170,6 +206,22 @@ def find_we(explicit=None):
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as key:
             steam, _ = winreg.QueryValueEx(key, "SteamPath")
             candidates.append(Path(steam) / "steamapps/common/wallpaper_engine/wallpaper64.exe")
+
+            # Discover additional Steam libraries.
+            library_file = Path(steam) / "steamapps" / "libraryfolders.vdf"
+            try:
+                vdf = library_file.read_text(
+                    encoding="utf-8-sig", errors="replace"
+                )
+                for path in re.findall(
+                    r'"path"\s*"([^"]+)"', vdf, flags=re.IGNORECASE
+                ):
+                    library = Path(path.replace("\\\\", "\\"))
+                    candidates.append(
+                        library / "steamapps/common/wallpaper_engine/wallpaper64.exe"
+                    )
+            except OSError:
+                pass
     except Exception:
         pass
 
